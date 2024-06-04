@@ -1,4 +1,6 @@
-FROM ubuntu:latest
+FROM scratch
 LABEL authors="guillaume"
 
-ENTRYPOINT ["top", "-b"]
+COPY oncall-to-prowl /
+
+ENTRYPOINT ["/oncall-to-prowl"]

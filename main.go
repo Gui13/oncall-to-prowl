@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"time"
 )
 
 var ProwlApiKey string
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Printf("[%s] called \n", r.RequestURI)
 	w.WriteHeader(200)
 }
 
@@ -24,8 +24,7 @@ func readyHandler(writer http.ResponseWriter, request *http.Request) {
 	}
 }
 
-func handleEvent(writer http.ResponseWriter, request *http.Request) {
-	fmt.Printf("[%s] called \n", request.RequestURI)
+func eventHandler(writer http.ResponseWriter, request *http.Request) {
 
 	decoder := json.NewDecoder(request.Body)
 	oncall := oncall_webhook{}
@@ -78,11 +77,21 @@ func main() {
 
 	mux.HandleFunc("/health", healthHandler)
 	mux.HandleFunc("/ready", readyHandler)
-	mux.HandleFunc("POST /event", handleEvent)
+	mux.Handle("POST /event", httpLogger(eventHandler))
 
 	err := http.ListenAndServe(listenAddr, mux)
 	if err != nil {
 		panic(err)
 	}
 
+}
+
+func httpLogger(next func(w http.ResponseWriter, r *http.Request)) http.Handler {
+	handler := http.HandlerFunc(next)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		now := time.Now()
+		handler.ServeHTTP(w, r)
+		finish := time.Since(now)
+		fmt.Printf("%s: [%s] %s %s in %s\n", time.Now().Format("2006-01-02T15:04:05.000Z07:00"), r.RequestURI, r.RemoteAddr, r.Method, finish)
+	})
 }
