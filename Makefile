@@ -15,5 +15,11 @@ arm64-mac:
 clean:
 	rm oncall-to-prowl
 
-docker: arm64-linux
-	docker build -t oncall-to-prowl .
+docker: amd64-linux
+	docker build -t ghcr.io/gui13/oncall-to-prowl .
+
+pushdocker:
+	docker push ghcr.io/gui13/oncall-to-prowl
+
+test:
+	go test

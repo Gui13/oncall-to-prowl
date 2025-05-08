@@ -1,13 +1,25 @@
 package main
 
+// This file contains the data structures used to decode the JSON payload from Oncall
+
 type AlertPayload struct {
-	EndsAt      string            `json:"endsAt"`
-	StartsAt    string            `json:"startsAt"`
-	Labels      map[string]string `json:"labels"`
-	Status      string            `json:"status"`
-	Annotations struct {
+	EndsAt       string            `json:"endsAt"`
+	StartsAt     string            `json:"startsAt"`
+	Labels       map[string]string `json:"labels"`
+	Status       string            `json:"status"`
+	GroupLabels  map[string]string `json:"groupLabels"`
+	CommonLabels map[string]string `json:"commonLabels"`
+	Annotations  struct {
 		Description string `json:"description"`
 	} `json:"annotations"`
+	Alerts []struct {
+		Labels       map[string]string `json:"labels"`
+		Status       string            `json:"status"`
+		Annotations  map[string]string `json:"annotations"`
+		StartsAt     string            `json:"startsAt"`
+		EndsAt       string            `json:"endsAt"`
+		GeneratorURL string            `json:"generatorURL"`
+	} `json:"alerts"`
 }
 
 type Event struct {
@@ -16,9 +28,8 @@ type Event struct {
 }
 
 type AlertGroup struct {
-	Labels map[string]string `json:"labels"`
-	ID     string            `json:"id"`
-	State  string            `json:"state"`
+	ID    string `json:"id"`
+	State string `json:"state"`
 }
 
 type oncall_webhook struct {

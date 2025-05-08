@@ -4,12 +4,14 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"time"
 )
 
 var ProwlApiKey string
+var VerboseMode bool
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(200)
@@ -25,17 +27,29 @@ func readyHandler(writer http.ResponseWriter, request *http.Request) {
 }
 
 func eventHandler(writer http.ResponseWriter, request *http.Request) {
+	// retrieve body as bytes for easier dump if error
+	defer request.Body.Close()
+	bodyBytes, err := io.ReadAll(request.Body)
+	if err != nil {
+		fmt.Printf("Error receiving request body: %s\n", err)
+		writer.WriteHeader(500)
+		return
+	}
 
-	decoder := json.NewDecoder(request.Body)
 	oncall := oncall_webhook{}
-	err := decoder.Decode(&oncall)
+	err = json.Unmarshal(bodyBytes, &oncall)
 	if err != nil {
 		fmt.Printf("Error decoding oncall payload: %s\n", err)
+		if VerboseMode {
+			fmt.Printf("payload is: %v", string(bodyBytes))
+		}
 		writer.WriteHeader(400)
 		return
 	}
 
-	//fmt.Printf("Oncall event:\n%+v\n", oncall)
+	if VerboseMode {
+		fmt.Printf("Oncall event:\n%+v\n", oncall)
+	}
 
 	prowlClient := NewProwClient(ProwlApiKey)
 
@@ -56,11 +70,17 @@ func main() {
 	flag.StringVar(&ProwlApiKey, "k", os.Getenv("PROWL_API_KEY"), "The prowl API key value, you can pass it as PROWL_API_KEY in the environment")
 	flag.StringVar(&serverAddr, "u", os.Getenv("SERVER_ADDRESS"), "The server address on which to listen, default is 0.0.0.0")
 	flag.StringVar(&serverPort, "p", os.Getenv("SERVER_PORT"), "Server port to listen on, default is 8080")
+	flag.BoolVar(&VerboseMode, "v", false, "Be verbose")
 	flag.Parse()
 
 	if ProwlApiKey == "" {
 		fmt.Println("Prowl API key not set, please set it using PROWL_API_KEY or launching with -k xxx")
 		os.Exit(1)
+	}
+
+	if VerboseMode {
+		fmt.Println("Verbose mode enabled")
+		fmt.Printf("Prowl Api Key: %s\n", ProwlApiKey)
 	}
 
 	if serverAddr == "" {

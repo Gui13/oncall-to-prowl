@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "oncall-to-prowl.fullname" . }}-test-connection"
+  labels:
+    {{- include "oncall-to-prowl.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    - name: wget
+      image: busybox
+      command: ['wget']
+      args: ['{{ .Release.Name }}-oncall-to-prowl.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.service.port }}/health']
+  restartPolicy: Never

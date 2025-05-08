@@ -6,7 +6,7 @@ import (
 	"strconv"
 )
 
-type ProwClient struct {
+type ProwlClient struct {
 	ProwlApiKey string
 	ProwlApiUrl string
 }
@@ -19,12 +19,28 @@ type ProwlAddQuery struct {
 	URL         string `json:"url"`
 }
 
-func (p *ProwClient) sendAlert(payload *AlertPayload) error {
-	return p.add("oncall", payload.Labels["alertname"], payload.Annotations.Description, 0, "")
+func (p *ProwlClient) sendAlert(payload *AlertPayload) error {
+	event := payload.Labels["alertname"]
+	if event == "" {
+		event = payload.GroupLabels["alertname"]
+	}
+
+	// take the description from the payload if it exists
+	description := payload.Annotations.Description
+	if description == "" {
+		// otherwise look for a description in the first alert
+		if len(payload.Alerts) > 0 {
+			description = payload.Alerts[0].Annotations["title"]
+		} else {
+			description = "No description"
+		}
+	}
+
+	return p.add("oncall", event, description, 0, "")
 }
 
-func (p *ProwClient) add(application string, event string, description string, priority int, URL string) error {
-	url := fmt.Sprintf("%s/%s", p.ProwlApiUrl, "add")
+func (p *ProwlClient) add(application string, event string, description string, priority int, URL string) error {
+	url := fmt.Sprintf("%s/add", p.ProwlApiUrl)
 	request, err := http.NewRequest(http.MethodPost, url, nil)
 	if err != nil {
 		return err
@@ -53,6 +69,6 @@ func (p *ProwClient) add(application string, event string, description string, p
 	return nil
 }
 
-func NewProwClient(prowlApiKey string) *ProwClient {
-	return &ProwClient{prowlApiKey, "https://api.prowlapp.com/publicapi"}
+func NewProwClient(prowlApiKey string) *ProwlClient {
+	return &ProwlClient{prowlApiKey, "https://api.prowlapp.com/publicapi"}
 }
