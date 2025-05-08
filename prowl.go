@@ -59,10 +59,12 @@ func (p *ProwlClient) add(application string, event string, description string, 
 	client := http.Client{}
 	done, err := client.Do(request)
 	if err != nil {
+		fmt.Printf("Error posting request to %s: %v\n", p.ProwlApiUrl, err)
 		return err
 	}
 
 	if done.StatusCode != http.StatusOK {
+		fmt.Printf("Error posting request to %s: %v\n", p.ProwlApiUrl, done.Status)
 		return fmt.Errorf("error posting request to %s: %v", p.ProwlApiUrl, request.Body)
 	}
 
