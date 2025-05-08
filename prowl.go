@@ -66,6 +66,8 @@ func (p *ProwlClient) add(application string, event string, description string, 
 		return fmt.Errorf("error posting request to %s: %v", p.ProwlApiUrl, request.Body)
 	}
 
+	fmt.Printf("Notification sent successfully: %s\n", done.Status)
+
 	return nil
 }
 
