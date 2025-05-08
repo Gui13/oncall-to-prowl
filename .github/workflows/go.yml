@@ -32,6 +32,6 @@ jobs:
       uses: docker/build-push-action@v6
       with:
         file: Dockerfile
-        tags: gui13/oncall-to-prowl:latest
+        tags: ghcr.io/gui13/oncall-to-prowl:latest
         push: true
         context: .
