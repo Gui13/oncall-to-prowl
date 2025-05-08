@@ -53,6 +53,7 @@ jobs:
 
     - name: Build and push Docker images
       uses: docker/build-push-action@v6
+      id: push
       with:
         file: Dockerfile
         tags: ${{ env.REGISTRY }}/gui13/${{ env.IMAGE_NAME }}:latest
